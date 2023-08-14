@@ -1,46 +1,50 @@
-## RKNN 导出模型说明
+## Description - export optimized model for RKNPU
 
-### 1.调整部分
+### 1. Model structure Adjustment
 
-- 由于 dfl 结构在 npu 处理性能不佳。假设有6000个候选框，原模型将 dfl 结构放置于 ''框置信度过滤" 前，则 6000 个候选框都需要计算经过 dfl 计算；而将 dfl 结构放置于 ''框置信度过滤" 后，假设过程成 100 个候选框，则dfl部分计算量减少至 100 个。
+- The dfl structure has poor performance on NPU processing, moved outside the model.
 
-  故将 dfl 结构使用 cpu 处理的耗时，虽然享受不到 npu 加速，但是本来带来的计算量较少也是很可观的。
-  
-  注： yolov6n, yolov6s 没有 dfl 结构; yolov6m, yolov6l 存在 dfl 结构
+  Assuming that there are 6000 candidate frames, the original model places the dfl structure before the "box confidence filter", then the 6000 candidate frames need to be calculated through dfl calculation. If the dfl structure is placed after the "box confidence filter", Assuming that there are 100 candidate boxes left after filtering, the calculation amount of the dfl part is reduced to 100, which greatly reduces the occupancy of computing resources and bandwidth resources.
+
+- Notice:  yolov6n/s  hasn't  dfl structure, while yolov6m/l has dfl structure
 
 
 
-- 假设存在 6000 个候选框，存在 80 类检测目标，则阈值需要检索的置信度有 6000* 80 ～= 4.8*10^5 个，占据了较多耗时，故导出模型时，在模型中额外新增了对 80 类检测目标进行求和操作，用于快速过滤置信度，该结构在部分情况下对模型有效。
+- Assuming that there are 6000 candidate boxes and the detection category is 80, the threshold retrieval operation needs to be repeated 6000* 80 ~= 4.8*10^5 times, which takes a lot of time. Therefore, when exporting the model, an additional summation operation for 80 types of detection targets is added to the model to quickly filter the confidence. (This structure is effective in some cases, related to the training results of the model)
 
-  (v6m, v6l) 可以在 ./yolov6/models/effidehead.py 70~86行位置，注释掉这部分
+  (v6m, v6l) To disable this optimization,  comment the following code in ./yolov6/models/effidehead.py (line70~86 part)
 
   ```
   cls_sum = torch.clamp(y[-1].sum(1, keepdim=True), 0, 1)
   output_for_rknn.append(cls_sum)
   ```
 
-  (v6n, v6s) 可以在  yolov6/models/heads/effidehead_distill_ns.py 78~94行位置，注释掉这部分
+  (v6n, v6s) To disable this optimization,  comment the following code in  ./yolov6/models/heads/effidehead_distill_ns.py (line78~94 part)
   
   ```
   cls_sum = torch.clamp(y[-1].sum(1, keepdim=True), 0, 1)
   output_for_rknn.append(cls_sum)
   ```
   
-  
 
 
 
-### 2.导出模型操作
+- This optimization only affects the export of the model and does not affect the training process. **For the training steps, please refer to the YOLOv6 official documentation.**
 
-在满足 ./requirements.txt 的环境要求后，执行以下语句导出模型
+
+
+### 2. Export model operation
+
+After meeting the environmental requirements of ./requirements.txt, execute the following statement to export the model
 
 ```
 python deploy/RKNN/export_onnx_for_rknn.py --weight ./yolov6n.pt
 
-# 如果自己训练模型，则路径./yolov6n.pt 请改为自己模型的路径
+# adjust ./yolov6n.pt path to export your model.
 ```
 
 
-### 3.转RKNN模型、Python demo、C demo
 
-请参考 https://github.com/airockchip/rknn_model_zoo/tree/main/models/CV/object_detection/yolo 
+### 3.Transfer to RKNN model, Python demo, C demo
+
+Please refer https://github.com/airockchip/rknn_model_zoo/tree/main/models/CV/object_detection/yolo 

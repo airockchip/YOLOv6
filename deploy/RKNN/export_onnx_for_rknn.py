@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
     # ONNX export
     try:
-        LOGGER.info('\nStarting to export ONNX...')
+        LOGGER.info('\nStarting to export ONNX with rknn-optimized...')
         export_file = args.weights.replace('.pt', '.onnx')  # filename
         torch.onnx.export(model, img, export_file, verbose=False, opset_version=12,
                           training=torch.onnx.TrainingMode.EVAL,
@@ -73,6 +73,6 @@ if __name__ == '__main__':
         # Checks
         onnx_model = onnx.load(export_file)  # load onnx model
         onnx.checker.check_model(onnx_model)  # check onnx model
-        LOGGER.info(f'ONNX export success, saved as {export_file}')
+        LOGGER.info(f'ONNX with rknn-optimized export success, saved as {export_file}')
     except Exception as e:
         LOGGER.info(f'ONNX export failure: {e}')
