@@ -67,7 +67,28 @@ class Detect(nn.Module):
         self.proj_conv.weight = nn.Parameter(self.proj.view([1, self.reg_max + 1, 1, 1]).clone().detach(),
                                                    requires_grad=False)
 
+    def _rknn_opt_head(self, x):
+        output_for_rknn = []
+        for i in range(self.nl):
+            x[i] = self.stems[i](x[i])
+            reg_feat = self.reg_convs[i](x[i])
+            reg_output = self.reg_preds[i](reg_feat)
+
+            cls_feat = self.cls_convs[i](x[i])
+            cls_output = self.cls_preds[i](cls_feat)
+            cls_output = torch.sigmoid(cls_output)
+
+            cls_sum = torch.clamp(cls_output.sum(1, keepdim=True), 0, 1)
+
+            output_for_rknn.append(reg_output)
+            output_for_rknn.append(cls_output)
+            output_for_rknn.append(cls_sum)
+        return output_for_rknn
+
     def forward(self, x):
+        if getattr(self, "export_rknn", False):
+            return self._rknn_opt_head(x)
+
         if self.training:
             cls_score_list = []
             reg_distri_list = []

@@ -1,3 +1,15 @@
+#### Get model optimized for RKNN
+Exports model with optimization for RKNN, please refer here [RKOPT_README.md](./deploy/RKNN/RKOPT_README.md)
+
+
+This optimization only affects the export of the model and does not affect the training process. **For the training steps, please refer to the YOLOv6 official documentation.**
+
+
+
+
+---
+
+
 <p align="center">
   <img src="assets/banner-YOLO.png" align="middle" width = "1000" />
 </p>
@@ -32,7 +44,7 @@ Implementation of paper:
     - Propose an anchor-aided training (AAT) strategy.
     - Involve a new self-distillation strategy for small models of YOLOv6.
     - Expand YOLOv6 and hit a new
-SOTA performance on the COCO dataset.
+    SOTA performance on the COCO dataset.
 - [2022.11.04] Release [base models](configs/base/README.md) to simplify the training and deployment process.
 - [2022.09.06] Customized quantization methods. 🚀 [Quantization Tutorial](./tools/qat/README.md)
 - [2022.09.05] Release M/L models and update N/T/S models with enhanced performance. 
